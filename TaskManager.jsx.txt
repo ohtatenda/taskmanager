@@ -1,0 +1,88 @@
+import { useState, useEffect } from "react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Select, SelectItem } from "@/components/ui/select";
+import { toast } from "react-hot-toast";
+
+const initialTasks = [
+  { id: 1, task: "Laundry", assignedTo: "Partner 1", category: "Household", completed: false },
+  { id: 2, task: "Grocery Shopping", assignedTo: "Partner 2", category: "Errands", completed: false },
+];
+
+export default function TaskManager() {
+  const [tasks, setTasks] = useState(initialTasks);
+  const [newTask, setNewTask] = useState("");
+  const [assignedTo, setAssignedTo] = useState("Partner 1");
+  const [category, setCategory] = useState("Household");
+
+  useEffect(() => {
+    // Save tasks in local storage (for persistence between refreshes)
+    localStorage.setItem("tasks", JSON.stringify(tasks));
+  }, [tasks]);
+
+  const addTask = () => {
+    if (!newTask.trim()) return;
+    const newEntry = {
+      id: tasks.length + 1,
+      task: newTask,
+      assignedTo,
+      category,
+      completed: false,
+    };
+    setTasks([...tasks, newEntry]);
+    setNewTask("");
+    toast.success("Task added successfully");
+  };
+
+  const toggleCompletion = (id) => {
+    setTasks(
+      tasks.map((task) => (task.id === id ? { ...task, completed: !task.completed } : task))
+    );
+  };
+
+  const removeTask = (id) => {
+    setTasks(tasks.filter((task) => task.id !== id));
+    toast.success("Task removed");
+  };
+
+  return (
+    <div className="p-6 max-w-xl mx-auto">
+      <h2 className="text-xl font-bold mb-4">Shared Task Manager</h2>
+      <div className="flex gap-2 mb-4">
+        <Input
+          placeholder="New Task"
+          value={newTask}
+          onChange={(e) => setNewTask(e.target.value)}
+        />
+        <Select value={assignedTo} onChange={setAssignedTo}>
+          <SelectItem value="Partner 1">Partner 1</SelectItem>
+          <SelectItem value="Partner 2">Partner 2</SelectItem>
+        </Select>
+        <Select value={category} onChange={setCategory}>
+          <SelectItem value="Household">Household</SelectItem>
+          <SelectItem value="Errands">Errands</SelectItem>
+          <SelectItem value="Financial">Financial</SelectItem>
+          <SelectItem value="Parenting">Parenting</SelectItem>
+        </Select>
+        <Button onClick={addTask}>Add</Button>
+      </div>
+      {tasks.map((task) => (
+        <Card key={task.id} className="mb-2">
+          <CardContent className="flex justify-between items-center p-4">
+            <div className="flex gap-2">
+              <Checkbox checked={task.completed} onCheckedChange={() => toggleCompletion(task.id)} />
+              <span className={`${task.completed ? "line-through text-gray-400" : ""}`}>{task.task}</span>
+            </div>
+            <div className="flex gap-2">
+              <span className="text-sm text-gray-600">{task.category}</span>
+              <span className="text-sm font-semibold">{task.assignedTo}</span>
+              <Button size="sm" variant="outline" onClick={() => removeTask(task.id)}>Remove</Button>
+            </div>
+          </CardContent>
+        </Card>
+      ))}
+    </div>
+  );
+}
